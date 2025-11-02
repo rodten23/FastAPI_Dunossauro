@@ -17,3 +17,20 @@ def test_read_root_retornar_ok_e_ola_mundao():
     # Validação do código HTTP retornado.
     assert response.json() == {'message': 'Olá, Mundão!'}  # Assert do teste.
     # Validação da resposta retornada.
+
+
+def test_read_pagina_html_retornar_ok_e_html():
+    client = TestClient(app)
+
+    response = client.get('/pagina-html')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.text == '''
+    <html>
+        <head>
+            <title> Mundão do HTML! </title>
+        </head>
+        <body>
+            <h1> Olá, Mundão do HTML! </h1>
+        </body>
+    </html>'''
