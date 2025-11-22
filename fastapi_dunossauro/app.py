@@ -3,7 +3,7 @@ from http import HTTPStatus
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-from fastapi_dunossauro.schemas import Message
+from fastapi_dunossauro.schemas import Message, UserPublic, UserSchema
 
 app = FastAPI(title='API FastAPI Kanban')
 # Instancia a aplicação FastAPI na variável 'app'.
@@ -37,3 +37,10 @@ def read_pagina_html():
 
 
 # Na rota '/pagina-html', nossa API retorna uma página HTML ao cliente.
+
+@app.post('/users', response_model=UserPublic, status_code=HTTPStatus.CREATED)
+# Nesta rota, o response_model garante os dados e formato da resposta.
+# Já o user: UserSchema garante quais dados e formatos são aceitos
+# na requisição.
+def create_user(user: UserSchema):
+    return user
