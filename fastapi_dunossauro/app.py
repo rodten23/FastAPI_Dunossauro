@@ -5,7 +5,8 @@ from fastapi.responses import HTMLResponse
 
 from fastapi_dunossauro.schemas import Message
 
-app = FastAPI()  # Instancia a aplicação FastAPI na variável 'app'.
+app = FastAPI(title='API FastAPI Kanban')
+# Instancia a aplicação FastAPI na variável 'app'.
 
 
 @app.get('/', response_model=Message, status_code=HTTPStatus.OK)
