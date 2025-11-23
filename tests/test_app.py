@@ -1,13 +1,9 @@
 from http import HTTPStatus
 
-from fastapi.testclient import TestClient
 
-from fastapi_dunossauro.app import app  # Importa o app definido em app.py
-
-
-def test_read_root_retornar_ok_e_ola_mundao():
+def test_read_root_retornar_ok_e_ola_mundao(client):
     # No nome do teste deve ser o que se espera que aconteça.
-    client = TestClient(app)  # Arrange do teste.
+    # client = TestClient(app) é o Arrange do teste, mas agora esta na fixture.
     # Instancia o cliente de teste a partir do app
 
     response = client.get('/')  # Act do teste.
@@ -19,9 +15,7 @@ def test_read_root_retornar_ok_e_ola_mundao():
     # Validação da resposta retornada.
 
 
-def test_read_pagina_html_retornar_ok_e_html():
-    client = TestClient(app)
-
+def test_read_pagina_html_retornar_ok_e_html(client):
     response = client.get('/pagina-html')
 
     assert response.status_code == HTTPStatus.OK
@@ -39,9 +33,7 @@ def test_read_pagina_html_retornar_ok_e_html():
     )
 
 
-def test_create_user_retornar_created_e_userpublic():
-    client = TestClient(app)
-
+def test_create_user_retornar_created_e_userpublic(client):
     response = client.post(
         '/users',
         json={
