@@ -4,11 +4,11 @@
 from datetime import datetime
 
 from sqlalchemy import func
-from sqlalchemy.orm import (
-    Mapped, mapped_as_dataclass, mapped_column, registry
-)
+from sqlalchemy.orm import Mapped, mapped_as_dataclass, mapped_column, registry
 
 table_registry = registry()
+# Cada classe registrada pelo objeto registry() é mapeada para uma tabela no
+# banco de dados.
 
 
 @mapped_as_dataclass(table_registry)
@@ -23,6 +23,7 @@ class User:
     created_at: Mapped[datetime] = mapped_column(
         init=False, server_default=func.now()
     )
+
 
 # Mapped referencia o atributo Python (e seu tipo) que será mapeado para uma
 # coluna específica em uma tabela do banco de dados.
