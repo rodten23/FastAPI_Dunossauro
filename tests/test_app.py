@@ -77,7 +77,7 @@ def test_update_user_retornar_ok_e_userpublic(client):
     }
 
 
-def test_update_user_id_invalido_retornar_not_found(client):
+def test_update_user_id_invalido_retornar_not_found_e_mensagem(client):
     response = client.put(
         '/users/999',
         json={
@@ -87,5 +87,19 @@ def test_update_user_id_invalido_retornar_not_found(client):
         },
     )
 
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'ID de usuário não encontrado.'}
+
+
+def test_delet_user_retornar_ok_e_mensagem(client):
+    response = client.delete('/users/1')
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'message': 'O usuário 1 foi deletado do sistema.'
+    }
+
+
+def test_delet_user_id_invalido_retornar_not_found_e_mensagem(client):
+    response = client.delete('/users/999')
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'ID de usuário não encontrado.'}
