@@ -3,7 +3,13 @@ from http import HTTPStatus
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-from fastapi_dunossauro.schemas import Message, UserDB, UserPublic, UserSchema
+from fastapi_dunossauro.schemas import (
+    Message,
+    UserDB,
+    UserList,
+    UserPublic,
+    UserSchema,
+)
 
 app = FastAPI(title='API FastAPI Kanban')
 # Instancia a aplicação FastAPI na variável 'app'.
@@ -53,3 +59,11 @@ def create_user(user: UserSchema):
     database.append(user_with_id)
 
     return user_with_id
+
+
+@app.get('/users', response_model=UserList, status_code=HTTPStatus.OK)
+def read_users():
+    return {'users': database}
+
+
+# Nesta rota, listamos os usuários presentes na banco de dados falso.

@@ -48,3 +48,13 @@ def test_create_user_retornar_created_e_userpublic(client):
         'email': 'melissa@teste.com',
         'id': 1,
     }
+
+
+def test_read_users_retornar_ok_e_lista_de_usuarios(client):
+    response = client.get('/users')
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'users': [
+            {'username': 'melissa', 'email': 'melissa@teste.com', 'id': 1}
+        ]
+    }

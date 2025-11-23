@@ -26,3 +26,7 @@ class UserDB(UserSchema):
 
 
 # O UserDB herda os campos recebidos do UserSchema e adiciona o id.
+
+
+class UserList(BaseModel):
+    users: list[UserPublic]
