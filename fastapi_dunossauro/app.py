@@ -69,6 +69,19 @@ def read_users():
 # Nesta rota, listamos os usuários presentes na banco de dados falso.
 
 
+@app.get(
+    '/users/{user_id}', response_model=UserPublic, status_code=HTTPStatus.OK
+)
+def read_user(user_id: int):
+    if user_id < 1 or user_id > len(database):
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='ID de usuário não encontrado.',
+        )
+
+    return database[user_id - 1]
+
+
 @app.put(
     '/users/{user_id}', response_model=UserPublic, status_code=HTTPStatus.OK
 )

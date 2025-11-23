@@ -60,6 +60,22 @@ def test_read_users_retornar_ok_e_lista_de_usuarios(client):
     }
 
 
+def test_read_user_retornar_ok_e_userpublic(client):
+    response = client.get('/users/1')
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'username': 'melissa',
+        'email': 'melissa@teste.com',
+        'id': 1,
+    }
+
+
+def test_read_user_id_invalido_retornar_not_found_e_mensagem(client):
+    response = client.get('/users/999')
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'ID de usuário não encontrado.'}
+
+
 def test_update_user_retornar_ok_e_userpublic(client):
     response = client.put(
         '/users/1',
