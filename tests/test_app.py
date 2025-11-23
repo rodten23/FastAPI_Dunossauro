@@ -58,3 +58,34 @@ def test_read_users_retornar_ok_e_lista_de_usuarios(client):
             {'username': 'melissa', 'email': 'melissa@teste.com', 'id': 1}
         ]
     }
+
+
+def test_update_user_retornar_ok_e_userpublic(client):
+    response = client.put(
+        '/users/1',
+        json={
+            'username': 'miguel',
+            'email': 'miguel@teste.com',
+            'password': 'senha_miguel',
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'username': 'miguel',
+        'email': 'miguel@teste.com',
+        'id': 1,
+    }
+
+
+def test_update_user_id_invalido_retornar_not_found(client):
+    response = client.put(
+        '/users/999',
+        json={
+            'username': 'sara',
+            'email': 'sara@teste.com',
+            'password': 'senha_sara',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'ID de usuário não encontrado.'}
