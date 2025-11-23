@@ -25,7 +25,9 @@ def test_read_pagina_html_retornar_ok_e_html():
     response = client.get('/pagina-html')
 
     assert response.status_code == HTTPStatus.OK
-    assert response.text == '''
+    assert (
+        response.text
+        == """
     <html>
         <head>
             <title> Mundão do HTML! </title>
@@ -33,4 +35,24 @@ def test_read_pagina_html_retornar_ok_e_html():
         <body>
             <h1> Olá, Mundão do HTML! </h1>
         </body>
-    </html>'''
+    </html>"""
+    )
+
+
+def test_create_user_retornar_created_e_userpublic():
+    client = TestClient(app)
+
+    response = client.post(
+        '/users',
+        json={
+            'username': 'melissa',
+            'email': 'melissa@teste.com',
+            'password': 'senha',
+        },
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.json() == {
+        'username': 'melissa',
+        'email': 'melissa@teste.com',
+        'id': 1,
+    }
