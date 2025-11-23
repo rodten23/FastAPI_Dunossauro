@@ -3,6 +3,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from contextlib import contextmanager
+from datetime import datetime
+
+from sqlalchemy import create_engine, event
+
 from fastapi_dunossauro.app import app  # Importa o app definido em app.py
 from fastapi_dunossauro.models import table_registry
 
@@ -39,3 +44,37 @@ def session():
     # .drop_all(engine) limpa as tabelas do banco de dados a cada teste.
     engine.dispose()
     # .dispose fecha todas as conexões abertas associadas ao engine.
+
+
+@contextmanager
+# Uma fixture de contexto permite manipular algum valor no banco de dados.
+# Neste caso, toda veze que um registro de model for inserido no banco de
+# dados, se ele tiver o campo created_at, este campo será cadastrado conforme
+# definido nas funções abaixo.
+def _mock_db_time(*, model, time=datetime(2025, 11, 15)):
+# Parâmetros após * devem ser chamados nomeados,
+# para ficarem explícitos na função. Ou seja, mock_db_time(model=User).
+
+    def fake_time_hook(mapper, connection, target):
+    # Os parâmetros mapper, connection e target são obrigatórios.
+        if hasattr(target, 'created_at'):
+            target.created_at = time
+    # Função para alterar alterar o método created_at do objeto de target.
+
+    event.listen(model, 'before_insert', fake_time_hook)
+    # event.listen adiciona um evento relacionado a um model que será passado
+    # à função. Esse evento é o before_insert e ele executará
+    # uma função (hook) antes de inserir o registro no banco de dados.
+
+    yield time
+    # yield retorna o datetime na abertura do gerenciamento de contexto.
+
+    event.remove(model, 'before_insert', fake_time_hook)
+    # event.remove remove o hook dos eventos após o final do gerenciamento
+    # de contexto.
+
+
+@pytest.fixture
+def mock_db_time():
+    return _mock_db_time
+# Fixture que retorna a fixture de contexto para manipular o created_at.
