@@ -1,12 +1,10 @@
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-
 from contextlib import contextmanager
 from datetime import datetime
 
+import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
+from sqlalchemy.orm import Session
 
 from fastapi_dunossauro.app import app  # Importa o app definido em app.py
 from fastapi_dunossauro.models import table_registry
@@ -52,13 +50,14 @@ def session():
 # dados, se ele tiver o campo created_at, este campo será cadastrado conforme
 # definido nas funções abaixo.
 def _mock_db_time(*, model, time=datetime(2025, 11, 15)):
-# Parâmetros após * devem ser chamados nomeados,
-# para ficarem explícitos na função. Ou seja, mock_db_time(model=User).
+    # Parâmetros após * devem ser chamados nomeados,
+    # para ficarem explícitos na função. Ou seja, mock_db_time(model=User).
 
     def fake_time_hook(mapper, connection, target):
-    # Os parâmetros mapper, connection e target são obrigatórios.
+        # Os parâmetros mapper, connection e target são obrigatórios.
         if hasattr(target, 'created_at'):
             target.created_at = time
+
     # Função para alterar alterar o método created_at do objeto de target.
 
     event.listen(model, 'before_insert', fake_time_hook)
@@ -77,4 +76,6 @@ def _mock_db_time(*, model, time=datetime(2025, 11, 15)):
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
+
+
 # Fixture que retorna a fixture de contexto para manipular o created_at.
