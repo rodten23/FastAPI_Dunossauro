@@ -49,14 +49,22 @@ def session():
 # Neste caso, toda veze que um registro de model for inserido no banco de
 # dados, se ele tiver o campo created_at, este campo será cadastrado conforme
 # definido nas funções abaixo.
-def _mock_db_time(*, model, time=datetime(2025, 11, 15)):
+def _mock_db_time(
+    *,
+    model,
+    created_time=datetime(2025, 11, 15),
+    updated_time=datetime(2025, 11, 30),
+):
     # Parâmetros após * devem ser chamados nomeados,
     # para ficarem explícitos na função. Ou seja, mock_db_time(model=User).
 
     def fake_time_hook(mapper, connection, target):
         # Os parâmetros mapper, connection e target são obrigatórios.
         if hasattr(target, 'created_at'):
-            target.created_at = time
+            target.created_at = created_time
+
+        if hasattr(target, 'updated_at'):
+            target.updated_at = updated_time
 
     # Função para alterar alterar o método created_at do objeto de target.
 
@@ -65,7 +73,7 @@ def _mock_db_time(*, model, time=datetime(2025, 11, 15)):
     # à função. Esse evento é o before_insert e ele executará
     # uma função (hook) antes de inserir o registro no banco de dados.
 
-    yield time
+    yield created_time, updated_time
     # yield retorna o datetime na abertura do gerenciamento de contexto.
 
     event.remove(model, 'before_insert', fake_time_hook)

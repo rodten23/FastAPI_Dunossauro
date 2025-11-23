@@ -27,6 +27,7 @@ def test_create_user(session, mock_db_time):
         'username': 'miguel',
         'password': 'senha_miguel',
         'email': 'miguel@teste.com',
-        'created_at': time,
+        'created_at': time[0],
+        'updated_at': time[1],
         # Usa o time gerado por mock_db_time para validar o campo created_at.
     }
