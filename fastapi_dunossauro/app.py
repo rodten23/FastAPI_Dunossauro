@@ -11,7 +11,7 @@ from fastapi_dunossauro.schemas import (
     UserSchema,
 )
 
-app = FastAPI(title='API FastAPI Kanban')
+app = FastAPI(title='API - Kanban com FastAPI')
 # Instancia a aplicação FastAPI na variável 'app'.
 
 database = []  # Banco de dados falso para ir testando a aplicação.
