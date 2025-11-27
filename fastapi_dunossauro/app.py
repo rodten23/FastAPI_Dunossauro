@@ -1,8 +1,12 @@
 from http import HTTPStatus
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from fastapi_dunossauro.database import get_session
+from fastapi_dunossauro.models import User
 from fastapi_dunossauro.schemas import (
     Message,
     UserDB,
@@ -49,16 +53,43 @@ def read_pagina_html():
 
 @app.post('/users', response_model=UserPublic, status_code=HTTPStatus.CREATED)
 # Nesta rota, o response_model garante os dados e formato da resposta.
-# Já o user: UserSchema garante quais dados e formatos são aceitos
-# na requisição.
-def create_user(user: UserSchema):
-    user_with_id = UserDB(**user.model_dump(), id=len(database) + 1)
-    # ** são usados para desempacotar o dict em parâmetros.
-    # model_dump() é um método que converte o objeto recebido em um dict.
+def create_user(user: UserSchema, session: Session = Depends(get_session)):
+    # O user: UserSchema garante quais dados e formatos são aceitos
+    # na requisição.
+    # session... diz que a função get_session será executada antes da execução
+    # da função e o valor retornado por get_session será atribuído ao
+    # parâmetro session.
+    db_user = session.scalar(
+        select(User).where(
+            (User.username == user.username) | (User.email == user.email)
+        )
+    )
+    # Consulta o banco para validar se já existe username ou email informados.
+    # A função scalar pode retornar um objeto ou None.
 
-    database.append(user_with_id)
+    if db_user:
+        if db_user.username == user.username:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail='Este nome de usuário já existe.',
+            )
+        elif db_user.email == user.email:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail='Este e-mail já está sendo usado.',
+            )
+    # Define resposta, caso já exista o username ou email.
 
-    return user_with_id
+    db_user = User(
+        username=user.username, password=user.password, email=user.email
+    )
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    # Se passa na validação, novo usuário é criado no banco de dados.
+    # Refresh é usado no final para trazer os outros dados do usuário.
+
+    return db_user
 
 
 @app.get('/users', response_model=UserList, status_code=HTTPStatus.OK)
