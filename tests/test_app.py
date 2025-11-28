@@ -53,11 +53,9 @@ def test_create_user_retornar_created_e_userpublic(client):
 def test_read_users_retornar_ok_e_lista_de_usuarios(client):
     response = client.get('/users')
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'users': [
-            {'username': 'melissa', 'email': 'melissa@teste.com', 'id': 1}
-        ]
-    }
+    assert response.json() == {'users': []}
+# Como o banco de dados é "limpo" a cada teste, o teste agora só consegue
+# testar o retorno de lista vazia.
 
 
 def test_read_user_retornar_ok_e_userpublic(client):
