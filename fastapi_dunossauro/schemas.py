@@ -24,12 +24,5 @@ class UserPublic(BaseModel):
 # os modelos do SQLAlchemy.
 
 
-class UserDB(UserSchema):
-    id: int
-
-
-# O UserDB herda os campos recebidos do UserSchema e adiciona o id.
-
-
 class UserList(BaseModel):
     users: list[UserPublic]
