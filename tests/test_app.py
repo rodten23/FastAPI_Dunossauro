@@ -52,6 +52,40 @@ def test_create_user_retornar_created_e_userpublic(client):
     }
 
 
+def test_create_user_retonar_conflict_username_e_mensagem(client, user):
+    # Criando um registro para Elaine
+    response = client.post(
+        '/users',
+        json={
+            'username': 'Melissa',
+            'email': 'elaine@test.com',
+            'password': 'senha_elaine',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {
+        'detail': 'Nome de usuário ou e-mail já existem.'
+    }
+
+
+def test_create_user_retonar_conflict_email_e_mensagem(client, user):
+    # Criando um registro para Elaine
+    response = client.post(
+        '/users',
+        json={
+            'username': 'Leonardo',
+            'email': 'melissa@test.com',
+            'password': 'senha_leonardo',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {
+        'detail': 'Nome de usuário ou e-mail já existem.'
+    }
+
+
 def test_read_users_retornar_ok_e_lista_de_usuarios_vazia(client):
     response = client.get('/users')
     assert response.status_code == HTTPStatus.OK
@@ -117,7 +151,7 @@ def test_update_user_retonar_conflict_e_mensagem(client, user):
         },
     )
 
-    # Alterando o user.username das fixture Dirce
+    # Alterando o user.username da fixture Melissa
     response_update = client.put(
         f'/users/{user.id}',
         json={

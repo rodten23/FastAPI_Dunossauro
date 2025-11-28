@@ -71,14 +71,17 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
         if db_user.username == user.username:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail='Este nome de usuário já existe.',
+                detail='Nome de usuário ou e-mail já existem.',
             )
         elif db_user.email == user.email:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail='Este e-mail já está sendo usado.',
+                detail='Nome de usuário ou e-mail já existem.',
             )
+
     # Define resposta, caso já exista o username ou email.
+    # Boa prática de segurança é informar o mínimo possível, por isso
+    # as duas mensagens estão iguais.
 
     db_user = User(
         username=user.username, password=user.password, email=user.email
