@@ -157,13 +157,16 @@ def update_user(
 @app.delete(
     '/users/{user_id}', response_model=Message, status_code=HTTPStatus.OK
 )
-def delete_user(user_id: int):
-    if user_id < 1 or user_id > len(database):
+def delete_user(user_id: int, session: Session = Depends(get_session)):
+    db_user = session.scalar(select(User).where(User.id == user_id))
+
+    if not db_user:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='ID de usuário não encontrado.',
         )
 
-    del database[user_id - 1]
+    session.delete(db_user)
+    session.commit()
 
-    return {'message': f'O usuário {user_id} foi deletado do sistema.'}
+    return {'message': f'O usuário {user_id} foi excluído do sistema.'}
