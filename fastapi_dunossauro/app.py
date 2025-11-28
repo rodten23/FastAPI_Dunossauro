@@ -18,8 +18,6 @@ from fastapi_dunossauro.schemas import (
 app = FastAPI(title='API - Kanban com FastAPI')
 # Instancia a aplicação FastAPI na variável 'app'.
 
-database = []  # Banco de dados falso para ir testando a aplicação.
-
 
 @app.get('/', response_model=Message, status_code=HTTPStatus.OK)
 def read_root():  # Retorna o dict com chave 'message' e valor 'Olá, Mundão!'.
@@ -114,14 +112,15 @@ def read_users(
 @app.get(
     '/users/{user_id}', response_model=UserPublic, status_code=HTTPStatus.OK
 )
-def read_user(user_id: int):
-    if user_id < 1 or user_id > len(database):
+def read_user(user_id: int, session: Session = Depends(get_session)):
+    db_user = session.scalar(select(User).where(User.id == user_id))
+    if not db_user:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='ID de usuário não encontrado.',
         )
 
-    return database[user_id - 1]
+    return db_user
 
 
 @app.put(
