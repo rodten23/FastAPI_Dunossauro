@@ -3,6 +3,7 @@ from http import HTTPStatus
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from fastapi_dunossauro.database import get_session
@@ -124,10 +125,9 @@ def read_user(user_id: int):
     '/users/{user_id}', response_model=UserPublic, status_code=HTTPStatus.OK
 )
 def update_user(
-    user_id: int,
-    user: UserSchema,
-    session: Session = Depends(get_session)
+    user_id: int, user: UserSchema, session: Session = Depends(get_session)
 ):
+    # Testamos se o user_id informado existe realmente.
     db_user = session.scalar(select(User).where(User.id == user_id))
     if not db_user:
         raise HTTPException(
@@ -135,13 +135,23 @@ def update_user(
             detail='ID de usuário não encontrado.',
         )
 
-    db_user.username = user.username
-    db_user.email = user.email
-    db_user.password = user.password
-    session.commit()
-    session.refresh(db_user)
+    # Se user_id existir, atualizamos usuário no bando de dados.
+    try:
+        db_user.username = user.username
+        db_user.email = user.email
+        db_user.password = user.password
+        session.commit()
+        session.refresh(db_user)
 
-    return db_user
+        return db_user
+
+    # Porém, se tentar repetir username ou email já utilizados,
+    # é barrado com Integrity Error (Conflict).
+    except IntegrityError:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail='Nome de usuário ou e-mail já existem.',
+        )
 
 
 @app.delete(
