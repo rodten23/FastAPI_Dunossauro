@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class Message(BaseModel):
@@ -15,10 +15,13 @@ class UserPublic(BaseModel):
     id: int
     username: str
     email: EmailStr
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Trocar o str por EmailStr tanto na UserSchema, quando na UserPublic,
 # garante que teremos um email e não apenas uma string.
+# ConfigDict(from_attributes=True) permite a permite o Pydantic lidar com
+# os modelos do SQLAlchemy.
 
 
 class UserDB(UserSchema):

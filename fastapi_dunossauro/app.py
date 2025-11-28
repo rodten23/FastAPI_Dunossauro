@@ -103,6 +103,8 @@ def read_users(
     # Os parâmetros offset e limit se tornam Query Parameters da rota.
     users = session.scalars(select(User).offset(offset).limit(limit)).all()
     return {'users': users}
+
+
 # Nesta rota, listamos os usuários presentes na banco de dados.
 
 

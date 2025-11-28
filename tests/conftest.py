@@ -14,7 +14,7 @@ from sqlalchemy.pool import StaticPool
 
 from fastapi_dunossauro.app import app  # Importa o app definido em app.py
 from fastapi_dunossauro.database import get_session
-from fastapi_dunossauro.models import table_registry
+from fastapi_dunossauro.models import User, table_registry
 
 
 # Uma fixture é como uma função que prepara dados
@@ -107,3 +107,19 @@ def mock_db_time():
 
 
 # Fixture que retorna a fixture de contexto para manipular o created_at.
+
+
+@pytest.fixture
+def user(session):
+    user = User(
+        username='Melissa', email='melissa@test.com', password='senha_melissa'
+    )
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
+
+
+# Fixture para criar usuário de teste no banco de dados real.

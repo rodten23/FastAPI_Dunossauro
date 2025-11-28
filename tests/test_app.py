@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from fastapi_dunossauro.schemas import UserPublic
+
 
 def test_read_root_retornar_ok_e_ola_mundao(client):
     # No nome do teste deve ser o que se espera que aconteça.
@@ -50,12 +52,25 @@ def test_create_user_retornar_created_e_userpublic(client):
     }
 
 
-def test_read_users_retornar_ok_e_lista_de_usuarios(client):
+def test_read_users_retornar_ok_e_lista_de_usuarios_vazia(client):
     response = client.get('/users')
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'users': []}
+
+
 # Como o banco de dados é "limpo" a cada teste, o teste agora só consegue
 # testar o retorno de lista vazia.
+
+
+def test_read_users_retornar_ok_e_lista_de_usuarios_com_usuarios(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+    response = client.get('/users')
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {'users': [user_schema]}
+
+
+# Este teste usa a fixture que cria usuário para validar quando
+# o banco tem usuários.
 
 
 def test_read_user_retornar_ok_e_userpublic(client):
