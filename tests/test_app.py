@@ -147,15 +147,15 @@ def test_update_user_id_invalido_retornar_not_found_e_mensagem(client):
     assert response.json() == {'detail': 'ID de usuário não encontrado.'}
 
 
-def test_delet_user_retornar_ok_e_mensagem(client):
+def test_delete_user_retornar_ok_e_mensagem(client, user):
     response = client.delete('/users/1')
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'message': 'O usuário 1 foi deletado do sistema.'
+        'message': 'O usuário 1 foi excluído do sistema.'
     }
 
 
-def test_delet_user_id_invalido_retornar_not_found_e_mensagem(client):
+def test_delete_user_id_invalido_retornar_not_found_e_mensagem(client):
     response = client.delete('/users/999')
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'ID de usuário não encontrado.'}
