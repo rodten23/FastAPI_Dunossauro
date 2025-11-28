@@ -93,11 +93,17 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
 
 
 @app.get('/users', response_model=UserList, status_code=HTTPStatus.OK)
-def read_users():
-    return {'users': database}
-
-
-# Nesta rota, listamos os usuários presentes na banco de dados falso.
+def read_users(
+    offset: int = 0, limit: int = 30, session: Session = Depends(get_session)
+):
+    # offset permite pular um número específico de registros antes de começar
+    # a buscar, o que é útil para implementar a navegação por páginas.
+    # limit define o número máximo de registros a serem retornados, permitindo
+    # que você controle a quantidade de dados enviados em cada resposta.
+    # Os parâmetros offset e limit se tornam Query Parameters da rota.
+    users = session.scalars(select(User).offset(offset).limit(limit)).all()
+    return {'users': users}
+# Nesta rota, listamos os usuários presentes na banco de dados.
 
 
 @app.get(
