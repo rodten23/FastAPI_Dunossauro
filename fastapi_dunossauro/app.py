@@ -14,9 +14,10 @@ from fastapi_dunossauro.schemas import (
     UserPublic,
     UserSchema,
 )
+from fastapi_dunossauro.security import get_password_hash
 
-app = FastAPI(title='API - Kanban com FastAPI')
 # Instancia a aplicação FastAPI na variável 'app'.
+app = FastAPI(title='API - Kanban com FastAPI')
 
 
 @app.get('/', response_model=Message, status_code=HTTPStatus.OK)
@@ -24,13 +25,12 @@ def read_root():  # Retorna o dict com chave 'message' e valor 'Olá, Mundão!'.
     return {'message': 'Olá, Mundão!'}
 
 
-"""
-Permite acessar o endpoint raiz ('/') pelo método HTTP GET.
-Por padrão, o FastAPI retorna o HTTP status code 200 para consultas tipo GET,
-mas podemos deixar explícito ao definir a rota.
-"""
+# Permite acessar o endpoint raiz ('/') pelo método HTTP GET.
+# Por padrão, o FastAPI retorna HTTP status code 200 para consultas tipo GET,
+# mas podemos deixar explícito ao definir a rota.
 
 
+# Na rota '/pagina-html', nossa API retorna uma página HTML ao cliente.
 @app.get(
     '/pagina-html', response_class=HTMLResponse, status_code=HTTPStatus.OK
 )
@@ -44,9 +44,6 @@ def read_pagina_html():
             <h1> Olá, Mundão do HTML! </h1>
         </body>
     </html>"""
-
-
-# Na rota '/pagina-html', nossa API retorna uma página HTML ao cliente.
 
 
 @app.post('/users', response_model=UserPublic, status_code=HTTPStatus.CREATED)
@@ -81,8 +78,13 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
     # Boa prática de segurança é informar o mínimo possível, por isso
     # as duas mensagens estão iguais.
 
+    hashed_password = get_password_hash(user.password)
+    # hashed_password recebe a senha criptografada.
+
     db_user = User(
-        username=user.username, password=user.password, email=user.email
+        username=user.username,
+        email=user.email,
+        password=hashed_password,  # A senha criptogra é armazenada no DB.
     )
     session.add(db_user)
     session.commit()
@@ -141,7 +143,7 @@ def update_user(
     try:
         db_user.username = user.username
         db_user.email = user.email
-        db_user.password = user.password
+        db_user.password = get_password_hash(user.password)
         session.commit()
         session.refresh(db_user)
 
