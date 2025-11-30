@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -10,11 +11,16 @@ from fastapi_dunossauro.database import get_session
 from fastapi_dunossauro.models import User
 from fastapi_dunossauro.schemas import (
     Message,
+    Token,
     UserList,
     UserPublic,
     UserSchema,
 )
-from fastapi_dunossauro.security import get_password_hash
+from fastapi_dunossauro.security import (
+    create_access_token,
+    get_password_hash,
+    verify_password
+)
 
 # Instancia a aplicação FastAPI na variável 'app'.
 app = FastAPI(title='API - Kanban com FastAPI')
@@ -174,3 +180,39 @@ def delete_user(user_id: int, session: Session = Depends(get_session)):
     session.commit()
 
     return {'message': f'O usuário {user_id} foi excluído do sistema.'}
+
+# O /token recebe os dados do formulário através do form_data
+# e tenta recuperar um usuário com o email fornecido.
+@app.post('/token', response_model=Token, status_code=HTTPStatus.OK)
+# A classe OAuth2PasswordRequestForm é uma classe especial do FastAPI que gera
+# automaticamente um formulário para solicitar o username (email neste caso) e
+# a senha. Este formulário será apresentado automaticamente no Swagger UI e
+# Redoc, facilitando a realização de testes de autenticação.
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session)
+):
+    # Atenção redobrada: conforme a nota anterior, o formulário gerado por
+    # OAuth2PasswordRequestForm armazena credendicais do usuário em username.
+    # Como usamos email para identifiar o usuário, aqui comparamos username do
+    # formulário com o atributo email do modelo User.
+    user = session.scalar(
+        select(User).where(User.email == form_data.username)
+    )
+    # Se o usuário não for encontrado ou a senha não corresponder ao hash
+    # armazenado no banco de dados, uma exceção é lançada.
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='E-mail ou senha inválidos.'
+        )
+    
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='E-mail ou senha inválidos.'
+        )
+    
+    access_token = create_access_token(data={'sub': user.email})
+
+    return {'access_token': access_token, 'token_type': 'bearer'}
