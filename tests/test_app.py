@@ -193,3 +193,15 @@ def test_delete_user_id_invalido_retornar_not_found_e_mensagem(client):
     response = client.delete('/users/999')
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'ID de usuário não encontrado.'}
+
+
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password}
+    )
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert 'access_token' in token
+    assert 'token_type' in token

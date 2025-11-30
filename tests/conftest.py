@@ -15,6 +15,7 @@ from sqlalchemy.pool import StaticPool
 from fastapi_dunossauro.app import app  # Importa o app definido em app.py
 from fastapi_dunossauro.database import get_session
 from fastapi_dunossauro.models import User, table_registry
+from fastapi_dunossauro.security import get_password_hash
 
 
 # Uma fixture é como uma função que prepara dados
@@ -111,13 +112,23 @@ def mock_db_time():
 
 @pytest.fixture
 def user(session):
+    password = 'senha_melissa'
     user = User(
-        username='Melissa', email='melissa@test.com', password='senha_melissa'
+        username='Melissa',
+        email='melissa@test.com',
+        password=get_password_hash('senha_melissa')  # Senha criptografada.
     )
 
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    # Aqui é feita uma modificação no objeto user (um monkey patch) para
+    # adicionar a senha em texto puro.
+    # Monkey patching é uma técnica em que modificamos ou estendemos o código
+    # em tempo de execução. Neste caso, estamos adicionando um novo atributo
+    # clean_password ao objeto user para armazenar a senha em texto puro.
+    user.clean_password = password
 
     return user
 
