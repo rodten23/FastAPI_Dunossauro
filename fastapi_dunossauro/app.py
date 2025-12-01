@@ -18,6 +18,7 @@ from fastapi_dunossauro.schemas import (
 )
 from fastapi_dunossauro.security import (
     create_access_token,
+    get_current_user,
     get_password_hash,
     verify_password,
 )
@@ -135,48 +136,56 @@ def read_user(user_id: int, session: Session = Depends(get_session)):
     '/users/{user_id}', response_model=UserPublic, status_code=HTTPStatus.OK
 )
 def update_user(
-    user_id: int, user: UserSchema, session: Session = Depends(get_session)
+    user_id: int,
+    user: UserSchema,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
 ):
-    # Testamos se o user_id informado existe realmente.
-    db_user = session.scalar(select(User).where(User.id == user_id))
-    if not db_user:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='ID de usuário não encontrado.',
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Você não tem permissão para esta ação.'
         )
 
-    # Se user_id existir, atualizamos usuário no bando de dados.
+    # Se o usuário logado tiver permissão, a atualização é executada.
     try:
-        db_user.username = user.username
-        db_user.email = user.email
-        db_user.password = get_password_hash(user.password)
+        current_user.username = user.username
+        current_user.email = user.email
+        current_user.password = get_password_hash(user.password)
         session.commit()
-        session.refresh(db_user)
+        session.refresh(current_user)
 
-        return db_user
+        return current_user
 
     # Porém, se tentar repetir username ou email já utilizados,
     # é barrado com Integrity Error (Conflict).
     except IntegrityError:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
-            detail='Nome de usuário ou e-mail já existem.',
+            detail='Nome de usuário ou e-mail já existem.'
         )
 
 
 @app.delete(
     '/users/{user_id}', response_model=Message, status_code=HTTPStatus.OK
 )
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    db_user = session.scalar(select(User).where(User.id == user_id))
+def delete_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
 
-    if not db_user:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='ID de usuário não encontrado.',
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Você não tem permissão para esta ação.'
         )
 
-    session.delete(db_user)
+    # Um ponto interessante com a validação de token implementada é que o
+    # usuário logado só tem "visualização" sobre ele próprio, porque qualquer
+    # tentativa de atuar em outro usuário só informa que ele não tem permissão
+
+    session.delete(current_user)
     session.commit()
 
     return {'message': f'O usuário {user_id} foi excluído do sistema.'}
