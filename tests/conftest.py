@@ -65,11 +65,12 @@ def session():
     # .dispose fecha todas as conexões abertas associadas ao engine.
 
 
-@contextmanager
 # Uma fixture de contexto permite manipular algum valor no banco de dados.
 # Neste caso, toda veze que um registro de model for inserido no banco de
 # dados, se ele tiver o campo created_at, este campo será cadastrado conforme
 # definido nas funções abaixo.
+# Função para alterar alterar created_at e updated_at do objeto de target.
+@contextmanager
 def _mock_db_time(
     *,
     model,
@@ -87,8 +88,6 @@ def _mock_db_time(
         if hasattr(target, 'updated_at'):
             target.updated_at = updated_time
 
-    # Função para alterar alterar o método created_at do objeto de target.
-
     event.listen(model, 'before_insert', fake_time_hook)
     # event.listen adiciona um evento relacionado a um model que será passado
     # à função. Esse evento é o before_insert e ele executará
@@ -102,14 +101,13 @@ def _mock_db_time(
     # de contexto.
 
 
+# Fixture o created_at e o updated_at manipulados.
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
 
 
-# Fixture que retorna a fixture de contexto para manipular o created_at.
-
-
+# Fixture para criar usuário de teste no banco de dados real.
 @pytest.fixture
 def user(session):
     password = 'senha_melissa'
@@ -133,4 +131,12 @@ def user(session):
     return user
 
 
-# Fixture para criar usuário de teste no banco de dados real.
+# Fixture que gera token para usuário de teste.
+@pytest.fixture
+def token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password}
+    )
+
+    return response.json()['access_token']

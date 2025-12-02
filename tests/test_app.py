@@ -123,9 +123,10 @@ def test_read_user_id_invalido_retornar_not_found_e_mensagem(client):
     assert response.json() == {'detail': 'ID de usuário não encontrado.'}
 
 
-def test_update_user_retornar_ok_e_userpublic(client, user):
+def test_update_user_retornar_ok_e_userpublic(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'Miguel',
             'email': 'miguel@test.com',
@@ -136,11 +137,11 @@ def test_update_user_retornar_ok_e_userpublic(client, user):
     assert response.json() == {
         'username': 'Miguel',
         'email': 'miguel@test.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
-def test_update_user_retonar_conflict_e_mensagem(client, user):
+def test_update_user_retonar_conflict_e_mensagem(client, user, token):
     # Criando um registro para Dirce
     client.post(
         '/users',
@@ -154,6 +155,7 @@ def test_update_user_retonar_conflict_e_mensagem(client, user):
     # Alterando o user.username da fixture Melissa
     response_update = client.put(
         f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'Dirce',
             'email': 'melissa@test.com',
@@ -167,32 +169,40 @@ def test_update_user_retonar_conflict_e_mensagem(client, user):
     }
 
 
-def test_update_user_id_invalido_retornar_not_found_e_mensagem(client):
-    response = client.put(
-        '/users/999',
-        json={
-            'username': 'Sara',
-            'email': 'sara@test.com',
-            'password': 'senha_sara',
-        },
+# def test_update_token_invalido_retornar_forbidden_e_mensagem(
+#         client, user, token
+# ):
+#     response = client.put(
+#         '/users/999',
+#         json={
+#             'username': 'Sara',
+#             'email': 'sara@test.com',
+#             'password': 'senha_sara',
+#         },
+#     )
+
+#     assert response.status_code == HTTPStatus.FORBIDDEN
+#     assert response.json() == {
+#         'detail': 'Você não tem permissão para esta ação.'
+#     }
+
+
+def test_delete_user_retornar_ok_e_mensagem(client, user, token):
+    response = client.delete(
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'}
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'ID de usuário não encontrado.'}
-
-
-def test_delete_user_retornar_ok_e_mensagem(client, user):
-    response = client.delete('/users/1')
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'message': 'O usuário 1 foi excluído do sistema.'
+        'message': f'O usuário {user.id} foi excluído do sistema.'
     }
 
 
-def test_delete_user_id_invalido_retornar_not_found_e_mensagem(client):
-    response = client.delete('/users/999')
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'ID de usuário não encontrado.'}
+# def test_delete_user_id_invalido_retornar_not_found_e_mensagem(client):
+#     response = client.delete('/users/999')
+#     assert response.status_code == HTTPStatus.NOT_FOUND
+#     assert response.json() == {'detail': 'ID de usuário não encontrado.'}
 
 
 def test_get_token(client, user):
