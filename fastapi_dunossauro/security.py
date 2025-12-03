@@ -56,11 +56,11 @@ def verify_password(plain_password: str, hashed_password: str):
 # do banco de dados. Se qualquer um desses passos falhar,
 # uma exceção será lançada e a requisição será negada.
 def get_current_user(
-        session: Session = Depends(get_session),
-        token: str = Depends(oauth2_scheme)
-        # A injeção de oauth2_scheme garante que um token foi enviado.
-        # Caso não tenha sido enviado, ele redirecionará a tokenUrl
-        # do objeto OAuth2PasswordBearer.
+    session: Session = Depends(get_session),
+    token: str = Depends(oauth2_scheme)
+    # A injeção de oauth2_scheme garante que um token foi enviado.
+     # Caso não tenha sido enviado, ele redirecionará a tokenUrl
+    # do objeto OAuth2PasswordBearer.
 ):
     # Como essa operação pode apresentar erros em diversos momentos,
     # foi atribuído um único erro à variável credentials_exception.

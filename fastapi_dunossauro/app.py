@@ -104,7 +104,10 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
 
 @app.get('/users', response_model=UserList, status_code=HTTPStatus.OK)
 def read_users(
-    offset: int = 0, limit: int = 30, session: Session = Depends(get_session)
+    offset: int = 0,
+    limit: int = 30,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user)
 ):
     # offset permite pular um número específico de registros antes de começar
     # a buscar, o que é útil para implementar a navegação por páginas.
@@ -121,13 +124,18 @@ def read_users(
 @app.get(
     '/users/{user_id}', response_model=UserPublic, status_code=HTTPStatus.OK
 )
-def read_user(user_id: int, session: Session = Depends(get_session)):
-    db_user = session.scalar(select(User).where(User.id == user_id))
-    if not db_user:
+def read_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user)
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='ID de usuário não encontrado.',
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Você não tem permissão para esta ação.'
         )
+
+    db_user = session.scalar(select(User).where(User.id == user_id))
 
     return db_user
 
@@ -152,6 +160,7 @@ def update_user(
         current_user.username = user.username
         current_user.email = user.email
         current_user.password = get_password_hash(user.password)
+        session.add(current_user)
         session.commit()
         session.refresh(current_user)
 
@@ -223,4 +232,4 @@ def login_for_access_token(
 
     access_token = create_access_token(data={'sub': user.email})
 
-    return {'access_token': access_token, 'token_type': 'bearer'}
+    return {'access_token': access_token, 'token_type': 'Bearer'}
