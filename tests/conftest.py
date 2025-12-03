@@ -114,7 +114,7 @@ def user(session):
     user = User(
         username='Melissa',
         email='melissa@test.com',
-        password=get_password_hash('senha_melissa')  # Senha criptografada.
+        password=get_password_hash(password)  # Senha criptografada.
     )
 
     session.add(user)
@@ -132,6 +132,7 @@ def user(session):
 
 
 # Fixture que gera token para usuário de teste.
+# Obs.: no curso, o usuário irá logar com e-mail e não com username.
 @pytest.fixture
 def token(client, user):
     response = client.post(
