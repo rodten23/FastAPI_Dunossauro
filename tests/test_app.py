@@ -117,8 +117,9 @@ def test_read_user_retornar_ok_e_userpublic(client, user, token):
 
 
 def test_read_user_retornar_forbidden_e_mensagem(client, user, token):
+    another_user = user.id + 1
     response = client.get(
-        f'/users/{user.id}',
+        f'/users/{another_user}',
         headers={'Authorization': f'Bearer {token}'}
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
@@ -178,6 +179,23 @@ def test_update_user_retonar_conflict_e_mensagem(client, user, token):
     }
 
 
+def test_update_user_retornar_forbidden_e_mensagem(client, user, token):
+    another_user = user.id + 1
+    response = client.put(
+        f'/users/{another_user}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'username': 'Melissa',
+            'email': 'melissa@test.com',
+            'password': 'nova_senha_melissa',
+        },
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {
+        'detail': 'Você não tem permissão para esta ação.'
+    }
+
+
 def test_delete_user_retornar_ok_e_mensagem(client, user, token):
     response = client.delete(
         f'/users/{user.id}',
@@ -187,6 +205,18 @@ def test_delete_user_retornar_ok_e_mensagem(client, user, token):
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'message': f'O usuário {user.id} foi excluído do sistema.'
+    }
+
+
+def test_delete_user_retornar_forbidden_e_mensagem(client, user, token):
+    another_user = user.id + 1
+    response = client.delete(
+        f'/users/{another_user}',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {
+        'detail': 'Você não tem permissão para esta ação.'
     }
 
 
@@ -200,6 +230,26 @@ def test_get_token(client, user):
     assert response.status_code == HTTPStatus.OK
     assert 'access_token' in token
     assert token['token_type'] == 'Bearer'
+
+
+def test_get_token_email_errado_return_unauthorized_e_detail(client, user):
+    response = client.post(
+        '/token',
+        data={'username': 'another@mail.com', 'password': user.clean_password}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'E-mail ou senha inválidos.'}
+
+
+def test_get_token_password_errado_return_unauthorized_e_detail(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': 'another_password'}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'E-mail ou senha inválidos.'}
 
 
 def test_get_current_user_not_found__exercicio(client):
