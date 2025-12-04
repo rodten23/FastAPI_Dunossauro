@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from fastapi_dunossauro.schemas import UserPublic
+from fastapi_dunossauro.security import create_access_token
 
 
 def test_read_root_retornar_ok_e_ola_mundao(client):
@@ -86,46 +87,56 @@ def test_create_user_retonar_conflict_email_e_mensagem(client, user):
     }
 
 
-def test_read_users_retornar_ok_e_lista_de_usuarios_vazia(client):
-    response = client.get('/users')
-    assert response.status_code == HTTPStatus.OK
-    assert response.json() == {'users': []}
+# O test_read_users_retornar_ok_e_lista_de_usuarios_vazia não é mais
+# necessário, porque com o endpoint protegido pro token, só é possível chamar
+# a rota se tiver um usuário para gerar o token.
 
-
-# Como o banco de dados é "limpo" a cada teste, o teste agora só consegue
-# testar o retorno de lista vazia.
-
-
-def test_read_users_retornar_ok_e_lista_de_usuarios_com_usuarios(client, user):
+# Este teste usa a fixture que cria usuário para validar quando
+# o banco tem usuários.
+def test_read_users_retornar_ok_e_lista_de_usuarios(client, user, token):
     user_schema = UserPublic.model_validate(user).model_dump()
-    response = client.get('/users')
+    response = client.get(
+        '/users',
+        headers={'Authorization': f'Bearer {token}'}
+    )
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'users': [user_schema]}
 
 
-# Este teste usa a fixture que cria usuário para validar quando
-# o banco tem usuários.
-
-
-def test_read_user_retornar_ok_e_userpublic(client, user):
-    response = client.get('/users/1')
+def test_read_user_retornar_ok_e_userpublic(client, user, token):
+    response = client.get(
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'}
+    )
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'username': 'Melissa',
         'email': 'melissa@test.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
-def test_read_user_id_invalido_retornar_not_found_e_mensagem(client):
-    response = client.get('/users/999')
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'ID de usuário não encontrado.'}
+def test_read_user_retornar_forbidden_e_mensagem(client, user, token):
+    another_user = user.id + 1
+    response = client.get(
+        f'/users/{another_user}',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {
+        'detail': 'Você não tem permissão para esta ação.'
+    }
 
 
-def test_update_user_retornar_ok_e_userpublic(client, user):
+# O test_read_user_id_invalido_retornar_not_found_e_mensagem não é mais
+# necessário, porque com o endpoint protegido pro token, só é possível chamar
+# a rota se tiver um usuário para gerar o token.
+
+
+def test_update_user_retornar_ok_e_userpublic(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'Miguel',
             'email': 'miguel@test.com',
@@ -136,11 +147,11 @@ def test_update_user_retornar_ok_e_userpublic(client, user):
     assert response.json() == {
         'username': 'Miguel',
         'email': 'miguel@test.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
-def test_update_user_retonar_conflict_e_mensagem(client, user):
+def test_update_user_retonar_conflict_e_mensagem(client, user, token):
     # Criando um registro para Dirce
     client.post(
         '/users',
@@ -154,6 +165,7 @@ def test_update_user_retonar_conflict_e_mensagem(client, user):
     # Alterando o user.username da fixture Melissa
     response_update = client.put(
         f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'Dirce',
             'email': 'melissa@test.com',
@@ -167,29 +179,104 @@ def test_update_user_retonar_conflict_e_mensagem(client, user):
     }
 
 
-def test_update_user_id_invalido_retornar_not_found_e_mensagem(client):
+def test_update_user_retornar_forbidden_e_mensagem(client, user, token):
+    another_user = user.id + 1
     response = client.put(
-        '/users/999',
+        f'/users/{another_user}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': 'Sara',
-            'email': 'sara@test.com',
-            'password': 'senha_sara',
+            'username': 'Melissa',
+            'email': 'melissa@test.com',
+            'password': 'nova_senha_melissa',
         },
     )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'ID de usuário não encontrado.'}
-
-
-def test_delete_user_retornar_ok_e_mensagem(client, user):
-    response = client.delete('/users/1')
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {
-        'message': 'O usuário 1 foi excluído do sistema.'
+        'detail': 'Você não tem permissão para esta ação.'
     }
 
 
-def test_delete_user_id_invalido_retornar_not_found_e_mensagem(client):
-    response = client.delete('/users/999')
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'ID de usuário não encontrado.'}
+def test_delete_user_retornar_ok_e_mensagem(client, user, token):
+    response = client.delete(
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'message': f'O usuário {user.id} foi excluído do sistema.'
+    }
+
+
+def test_delete_user_retornar_forbidden_e_mensagem(client, user, token):
+    another_user = user.id + 1
+    response = client.delete(
+        f'/users/{another_user}',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {
+        'detail': 'Você não tem permissão para esta ação.'
+    }
+
+
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password}
+    )
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert 'access_token' in token
+    assert token['token_type'] == 'Bearer'
+
+
+def test_get_token_email_errado_return_unauthorized_e_detail(client, user):
+    response = client.post(
+        '/token',
+        data={'username': 'another@mail.com', 'password': user.clean_password}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'E-mail ou senha inválidos.'}
+
+
+def test_get_token_password_errado_return_unauthorized_e_detail(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': 'another_password'}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'E-mail ou senha inválidos.'}
+
+
+def test_get_current_user_not_found__exercicio(client):
+    data = {'no-email': 'test'}
+    token = create_access_token(data)
+
+    response = client.delete(
+        '/users/1',
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {
+        'detail': 'Não foi possível validar as credenciais informadas.'
+    }
+
+
+def test_get_current_user_does_not_exists__exercicio(client):
+    data = {'sub': 'test@test'}
+    token = create_access_token(data)
+
+    response = client.delete(
+        '/users/1',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {
+        'detail': 'Não foi possível validar as credenciais informadas.'
+    }
