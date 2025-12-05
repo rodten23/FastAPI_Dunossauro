@@ -5,6 +5,7 @@
 # muito útil à medida que a aplicação se expande e rotas são adicionadas.
 
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -27,6 +28,10 @@ from fastapi_dunossauro.security import get_current_user, get_password_hash
 # documentação automática no swagger.
 router = APIRouter(prefix='/users', tags=['users'])
 
+CurrentUser = Annotated[User, Depends(get_current_user)]
+Session = Annotated[Session, Depends(get_session)]
+
+
 # Utiliza-se @router ao invés de @app para definir estas rotas.
 # Com o prefixo definido no router, os paths dos endpoints se tornam mais
 # simples e diretos. Ao invés de '/users/{user_id}', por exemplo,
@@ -35,7 +40,7 @@ router = APIRouter(prefix='/users', tags=['users'])
 
 @router.post('/', response_model=UserPublic, status_code=HTTPStatus.CREATED)
 # Nesta rota, o response_model garante os dados e formato da resposta.
-def create_user(user: UserSchema, session: Session = Depends(get_session)):
+def create_user(user: UserSchema, session: Session):
     # O user: UserSchema garante quais dados e formatos são aceitos
     # na requisição.
     # session... diz que a função get_session será executada antes da execução
@@ -84,10 +89,10 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
 
 @router.get('/', response_model=UserList, status_code=HTTPStatus.OK)
 def read_users(
+    session: Session,
+    current_user: CurrentUser,
     offset: int = 0,
-    limit: int = 30,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    limit: int = 30
 ):
     # offset permite pular um número específico de registros antes de começar
     # a buscar, o que é útil para implementar a navegação por páginas.
@@ -101,8 +106,8 @@ def read_users(
 @router.get('/{user_id}', response_model=UserPublic, status_code=HTTPStatus.OK)
 def read_user(
     user_id: int,
-    session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    session: Session,
+    current_user: CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
@@ -119,8 +124,8 @@ def read_user(
 def update_user(
     user_id: int,
     user: UserSchema,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    session: Session,
+    current_user: CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
@@ -151,8 +156,8 @@ def update_user(
 @router.delete('/{user_id}', response_model=Message, status_code=HTTPStatus.OK)
 def delete_user(
     user_id: int,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    session: Session,
+    current_user: CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(

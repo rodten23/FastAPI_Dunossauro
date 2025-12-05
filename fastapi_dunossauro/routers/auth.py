@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
@@ -12,6 +13,9 @@ from fastapi_dunossauro.security import create_access_token, verify_password
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 
+OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
+Session = Annotated[Session, Depends(get_session)]
+
 
 # O /token recebe os dados do formulário através do form_data
 # e tenta recuperar um usuário com o email fornecido.
@@ -21,8 +25,8 @@ router = APIRouter(prefix='/auth', tags=['auth'])
 # a senha. Este formulário será apresentado automaticamente no Swagger UI e
 # Redoc, facilitando a realização de testes de autenticação.
 def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    session: Session = Depends(get_session),
+    form_data: OAuth2Form,
+    session: Session,
 ):
     # Atenção redobrada: conforme a nota anterior, o formulário gerado por
     # OAuth2PasswordRequestForm armazena credendicais do usuário em username.
