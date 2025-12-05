@@ -7,7 +7,7 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from fastapi_dunossauro.database import get_session
 from fastapi_dunossauro.models import User
 from fastapi_dunossauro.schemas import (
+    FilterPage,
     Message,
     UserList,
     UserPublic,
@@ -91,15 +92,16 @@ def create_user(user: UserSchema, session: Session):
 def read_users(
     session: Session,
     current_user: CurrentUser,
-    offset: int = 0,
-    limit: int = 30
+    filter_users: Annotated[FilterPage, Query()]
 ):
     # offset permite pular um número específico de registros antes de começar
     # a buscar, o que é útil para implementar a navegação por páginas.
     # limit define o número máximo de registros a serem retornados, permitindo
     # que você controle a quantidade de dados enviados em cada resposta.
-    # Os parâmetros offset e limit se tornam Query Parameters da rota.
-    users = session.scalars(select(User).offset(offset).limit(limit)).all()
+    # filter_users invoca o Query Parameters do schema FilterPage.
+    users = session.scalars(
+        select(User).offset(filter_users.offset).limit(filter_users.limit)
+    ).all()
     return {'users': users}
 
 
