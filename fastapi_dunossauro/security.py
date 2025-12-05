@@ -21,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUES = 30
 pwd_context = PasswordHash.recommended()
 # Cria um contexto de hash de senhas com a recomendação da pwdlib (o argon2).
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/token')
 
 
 # create_access_token cria um novo token JWT para autenticar o usuário.
