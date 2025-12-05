@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class Message(BaseModel):
@@ -35,3 +35,10 @@ class Token(BaseModel):
     token_type: str
     # Tipo de autenticação incluída no header de autorização de cada request.
     # token_type mais comum para JWT é "bearer".
+
+
+# Este schema serve para definir os Query Parameters da rota read_users e
+# usando o Field com opção ge impedimos que sejam incluídos valores negativos.
+class FilterPage(BaseModel):
+    offset: int = Field(ge=0, default=0)
+    limit: int = Field(ge=0, default=15)

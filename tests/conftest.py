@@ -16,6 +16,7 @@ from fastapi_dunossauro.app import app  # Importa o app definido em app.py
 from fastapi_dunossauro.database import get_session
 from fastapi_dunossauro.models import User, table_registry
 from fastapi_dunossauro.security import get_password_hash
+from fastapi_dunossauro.settings import Settings
 
 
 # Uma fixture é como uma função que prepara dados
@@ -136,8 +137,14 @@ def user(session):
 @pytest.fixture
 def token(client, user):
     response = client.post(
-        '/token',
+        '/auth/token',
         data={'username': user.email, 'password': user.clean_password}
     )
 
     return response.json()['access_token']
+
+
+# Fixture para usar variáveis de ambiente nos testes.
+@pytest.fixture
+def settings():
+    return Settings()

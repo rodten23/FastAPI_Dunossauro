@@ -2,14 +2,14 @@ from http import HTTPStatus
 
 from jwt import decode
 
-from fastapi_dunossauro.security import SECRET_KEY, create_access_token
+from fastapi_dunossauro.security import create_access_token
 
 
-def test_jwt():
+def test_jwt(settings):
     data = {'test': 'test'}  # Dados que serão assinados pelo token JWT.
     token = create_access_token(data)  # Criação do nosso token JWT.
 
-    decoded = decode(token, SECRET_KEY, algorithms=['HS256'])
+    decoded = decode(token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
     # Nessa linha é chamanda a função decode da própria biblioteca do jwt e
     # passamos nosso token, o algoritmo que assinou e a nossa secret key.
     # O resultado da função decode deve ser o valor que passamos para a
