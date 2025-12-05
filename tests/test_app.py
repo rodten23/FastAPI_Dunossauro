@@ -222,7 +222,7 @@ def test_delete_user_retornar_forbidden_e_mensagem(client, user, token):
 
 def test_get_token(client, user):
     response = client.post(
-        '/token',
+        '/auth/token',
         data={'username': user.email, 'password': user.clean_password}
     )
     token = response.json()
@@ -234,7 +234,7 @@ def test_get_token(client, user):
 
 def test_get_token_email_errado_return_unauthorized_e_detail(client, user):
     response = client.post(
-        '/token',
+        '/auth/token',
         data={'username': 'another@mail.com', 'password': user.clean_password}
     )
 
@@ -244,7 +244,7 @@ def test_get_token_email_errado_return_unauthorized_e_detail(client, user):
 
 def test_get_token_password_errado_return_unauthorized_e_detail(client, user):
     response = client.post(
-        '/token',
+        '/auth/token',
         data={'username': user.email, 'password': 'another_password'}
     )
 
