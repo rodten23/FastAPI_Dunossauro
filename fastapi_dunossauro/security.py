@@ -11,29 +11,28 @@ from sqlalchemy.orm import Session
 
 from fastapi_dunossauro.database import get_session
 from fastapi_dunossauro.models import User
-
-# A constante SECRET_KEY é usada para assinar o token.
-# O algoritmo HS256 é usado para a codificação.
-# Em produção, a SECRET_KEY fica em local seguro e não exposta no código.
-SECRET_KEY = 'your_secret_key'
-ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUES = 30
-pwd_context = PasswordHash.recommended()
-# Cria um contexto de hash de senhas com a recomendação da pwdlib (o argon2).
+from fastapi_dunossauro.settings import Settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/token')
+# Cria um contexto de hash de senhas com a recomendação da pwdlib (o argon2).
+pwd_context = PasswordHash.recommended()
+settings = Settings()
 
 
 # create_access_token cria um novo token JWT para autenticar o usuário.
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(tz=ZoneInfo('UTC')) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUES
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUES
     )
     # Recebe um dicionário de dados e adiciona o tempo de expiração ao token.
     # Esses dados, em conjunto, formam o payload do JWT.
     to_encode.update({'exp': expire})
-    encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
     # Usa a biblioteca pyjwt para codificar essas informações em um token JWT,
     # que é então retornado.
@@ -72,7 +71,11 @@ def get_current_user(
 
     try:
         # Checa, após o decode do token, se o email está presente no subject.
-        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
         subject_email = payload.get('sub')
 
         if not subject_email:
