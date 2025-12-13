@@ -7,9 +7,10 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from fastapi_dunossauro.app import app  # Importa o app definido em app.py
@@ -36,14 +37,10 @@ def client(session):
     app.dependency_overrides.clear()
     # Limpa a sobrescrita que fizemos no app para usar a fixture de session.
 
-
-@pytest.fixture
-def session():
-    engine = create_engine(
-        'sqlite:///:memory:',
-        connect_args={'check_same_thread': False},
-        poolclass=StaticPool,
-    )
+# Quando utilizamos o pytest_asyncio.fixture, o pytest sabe que a função é
+# assíncrona e precisa ser aguardada (await).
+@pytest_asyncio.fixture
+async def session():
     # memory cria um banco de dados em memória, que será usado pela sessão
     # de banco de dados para nossos testes.
     # connect_args... desativa a verificação de que o objeto SQLite está sendo
@@ -51,11 +48,32 @@ def session():
     # compartilhada entre threads diferentes sem levar a erros.
     # poolclass=StaticPool: faz com que a engine use um pool de conexões
     # estático, ou seja, reutilize a mesma conexão para todas as solicitações.
-    table_registry.metadata.create_all(engine)
-    # .metadata.create_all(engine) cria todas as tabelas no banco de dados de
-    # teste antes de cada teste que usa a fixture session.
+    engine = create_async_engine(
+        'sqlite+aiosqlite:///:memory:',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
 
-    with Session(engine) as session:
+    # O engine cria uma conexão assíncrona e, ao usar begin(), estamos dizendo
+    # ao SQLAlchemy para iniciar uma transação dentro do contexto de execução
+    # assíncrona.
+    # O run_sync é uma forma de rodar código síncrono dentro de um ambiente
+    # assíncrono.
+    # .metadata.create_all() cria todas as tabelas no banco de dados de
+    # teste antes de cada teste que usa a fixture session.
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.create_all)
+
+    async with AsyncSession(engine, expire_on_commit=False) as session:
+        yield session
+
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.drop_all)
+    
+    table_registry.metadata.create_all(engine)
+    
+
+    async with AsyncSession(engine) as session:
         yield session
         # yield fornece uma instância de Session que será injetada em cada
         # teste que solicita a fixture session.
