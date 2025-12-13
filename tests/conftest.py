@@ -66,20 +66,13 @@ async def session():
 
     async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
-
-    async with engine.begin() as conn:
-        await conn.run_sync(table_registry.metadata.drop_all)
-    
-    table_registry.metadata.create_all(engine)
-    
-
-    async with AsyncSession(engine) as session:
-        yield session
         # yield fornece uma instância de Session que será injetada em cada
         # teste que solicita a fixture session.
 
-    table_registry.metadata.drop_all(engine)
     # .drop_all(engine) limpa as tabelas do banco de dados a cada teste.
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.drop_all)
+    
     engine.dispose()
     # .dispose fecha todas as conexões abertas associadas ao engine.
 
@@ -128,7 +121,7 @@ def mock_db_time():
 
 # Fixture para criar usuário de teste no banco de dados real.
 @pytest.fixture
-def user(session):
+def user(session: AsyncSession):
     password = 'senha_melissa'
     user = User(
         username='Melissa',
