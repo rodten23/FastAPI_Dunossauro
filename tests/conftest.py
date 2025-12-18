@@ -37,6 +37,7 @@ def client(session):
     app.dependency_overrides.clear()
     # Limpa a sobrescrita que fizemos no app para usar a fixture de session.
 
+
 # Quando utilizamos o pytest_asyncio.fixture, o pytest sabe que a função é
 # assíncrona e precisa ser aguardada (await).
 @pytest_asyncio.fixture
@@ -72,7 +73,7 @@ async def session():
     # .drop_all(engine) limpa as tabelas do banco de dados a cada teste.
     async with engine.begin() as conn:
         await conn.run_sync(table_registry.metadata.drop_all)
-    
+
     engine.dispose()
     # .dispose fecha todas as conexões abertas associadas ao engine.
 
